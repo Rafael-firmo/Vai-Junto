@@ -1,0 +1,31 @@
+services:
+  servidor:
+    build: .
+    container_name: caronas-servidor
+    ports:
+      - "6000:6000"
+
+    stop_signal: SIGINT
+  testes:
+    build: .
+    command: python3 testes.py
+
+  motorista:
+    build: .
+    command: python3 motorista.py
+    environment:
+      SERVIDOR: servidor
+    depends_on:
+      - servidor
+    stdin_open: true
+    tty: true
+
+  passageiro:
+    build: .
+    command: python3 passageiro.py
+    environment:
+      SERVIDOR: servidor
+    depends_on:
+      - servidor
+    stdin_open: true
+    tty: true
