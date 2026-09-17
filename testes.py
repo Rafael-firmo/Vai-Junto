@@ -121,8 +121,6 @@ def teste_reserva_e_tudo_ou_nada():
         "trechos": [{"id_carona": carona_cheia, "posicao": 0}],
     })
     assert resposta.codigo == 201
-
-    # agora alguem tenta Maceio -> Recife -> Caruaru; a segunda perna esta cheia
     segundo = novo_cliente("chegou_depois")
     resposta = segundo.enviar(protocolo.RESERVAR, {
         "trechos": [
@@ -132,7 +130,6 @@ def teste_reserva_e_tudo_ou_nada():
     })
     assert resposta.codigo == 409, resposta.corpo
 
-    # a vaga do trecho que TINHA lugar precisa continuar intacta
     consulta = segundo.enviar(protocolo.LISTAR_CARONAS, {})
     for carona in consulta.corpo["caronas"]:
         if carona["id"] == carona_livre:
@@ -147,8 +144,6 @@ def teste_mensagem_malformada_nao_derruba_o_servidor():
     cliente.conexao.enviar(b"isso nao e valido\r\n\r\n")
     resposta = cliente.conexao.receber_resposta()
     assert resposta.codigo == 400, resposta.corpo
-
-    # a mesma conexao precisa continuar utilizavel depois do erro
     resposta = cliente.enviar(protocolo.LISTAR_RESERVAS)
     assert resposta.codigo == 200
 
@@ -163,48 +158,41 @@ def teste_precisa_estar_autenticado():
     print("ok - sem token o servidor responde 401")
 
 
-# O enunciado exige que o servidor sobreviva a um cliente que morre.
-# Simulamos tres tipos de morte feia: fechar no meio de uma mensagem,
-# dar reset na conexao (RST em vez de FIN), e sumir logo apos publicar.
 def teste_queda_de_cliente_nao_derruba_o_servidor():
     motorista = novo_cliente("motorista_sobrevivente")
     id_carona = publicar(motorista, ["Natal", "Joao Pessoa"], 4, [30.0])
 
-    # 1. some no meio de uma mensagem: manda cabecalho prometendo corpo e fecha
+    # 1 sumir no meio de uma mensagem
     meio_da_mensagem = Cliente(ENDERECO, PORTA)
     meio_da_mensagem.conexao.socket.sendall(
         b"LISTAR_CARONAS CCP/1.0\r\nContent-Length: 500\r\n\r\n{")
     meio_da_mensagem.conexao.socket.close()
 
-    # 2. reset abrupto da conexao, sem fechamento educado
+    # 2 reset abrupto da conexao
     reset = Cliente(ENDERECO, PORTA)
     reset.conexao.socket.setsockopt(
         socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
     reset.conexao.socket.close()
 
-    # 3. autentica, publica e desaparece sem fechar direito
+    # 3 autentica, publica e desaparece 
     fantasma = novo_cliente("fantasma")
     publicar(fantasma, ["Aracaju", "Maceio"], 2, [45.0])
     fantasma.conexao.socket.close()
 
     time.sleep(0.2)
 
-    # o servidor tem que continuar atendendo normalmente
     sobrevivente = novo_cliente("chegou_depois_do_caos")
     resposta = sobrevivente.enviar(protocolo.BUSCAR, {
         "origem": "Natal", "destino": "Joao Pessoa", "data": "10/09/2026"})
     assert resposta.codigo == 200, resposta.corpo
     assert len(resposta.corpo["itinerarios"]) == 1
 
-    # e o estado deixado pelos clientes mortos tem que estar intacto
     reserva = sobrevivente.enviar(protocolo.RESERVAR, {
         "trechos": [{"id_carona": id_carona, "posicao": 0}]})
     assert reserva.codigo == 201, reserva.corpo
 
     print("ok - servidor sobrevive a quedas abruptas de clientes")
 
-
-# O enunciado pede que o tempo de resposta continue adequado sob carga.
 def teste_tempo_de_resposta_sob_carga():
     quantidade_de_clientes = 30
     buscas_por_cliente = 10
@@ -249,8 +237,6 @@ def teste_tempo_de_resposta_sob_carga():
     print(f"ok - {total} buscas de {quantidade_de_clientes} clientes simultaneos "
           f"(media {media * 1000:.1f}ms, pior {pior * 1000:.1f}ms)")
 
-
-# o servidor recusa data que nao existe, mesmo que o cliente nao valide
 def teste_servidor_recusa_data_invalida():
     motorista = novo_cliente("motorista_datas")
 
@@ -261,7 +247,6 @@ def teste_servidor_recusa_data_invalida():
         })
         assert resposta.codigo == 400, f"aceitou a data {data_ruim!r}: {resposta.corpo}"
 
-    # e continua aceitando data valida
     resposta = motorista.enviar(protocolo.PUBLICAR, {
         "rota": ["Bahia", "Sergipe"], "data": "29/02/2028", "horario": "08:00",
         "assentos": 2, "precos": [10.0],
@@ -271,13 +256,12 @@ def teste_servidor_recusa_data_invalida():
     print("ok - servidor recusa datas invalidas e aceita 29/02 em ano bissexto")
 
 
-# cliente apontado para um endereco inalcancavel desiste em vez de travar
+# cliente apontado para um endereco inalcancavel 
 def teste_cliente_desiste_de_servidor_inalcancavel():
     from cliente import TIMEOUT_DE_CONEXAO
 
     inicio = time.time()
     try:
-        # 203.0.113.0/24 e uma faixa reservada para documentacao: nunca responde
         Cliente("203.0.113.1", 6000)
         assert False, "deveria ter falhado ao conectar"
     except OSError:

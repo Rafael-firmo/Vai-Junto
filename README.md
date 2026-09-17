@@ -18,7 +18,7 @@ Dockerfile      imagem única para servidor e clientes
 ## Requisitos
 
 - Docker
-- Ou, sem Docker: Python 3
+- Ou, sem Docker: somente Python
 
 ## Numa máquina só
 
