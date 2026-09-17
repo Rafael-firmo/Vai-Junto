@@ -8,11 +8,11 @@ services:
     stop_signal: SIGINT
   testes:
     build: .
-    command: python3 testes.py
+    command: python testes.py
 
   motorista:
     build: .
-    command: python3 motorista.py
+    command: python motorista.py
     environment:
       SERVIDOR: servidor
     depends_on:
@@ -22,7 +22,7 @@ services:
 
   passageiro:
     build: .
-    command: python3 passageiro.py
+    command: python passageiro.py
     environment:
       SERVIDOR: servidor
     depends_on:

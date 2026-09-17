@@ -89,29 +89,3 @@ Testes contra o servidor remoto:
 ```bash
 docker run --rm -e SERVIDOR=IP_DO_SERVIDOR -e PORTA=6000 caronas python testes.py
 ```
-
-## Erros comuns
-
-| Erro                                          | Solução                                       |
-| --------------------------------------------- | --------------------------------------------- |
-| `Connection refused`, numa máquina só         | Use `-e SERVIDOR=host.docker.internal`        |
-| `Connection refused` ou trava, entre máquinas | Firewall ou IP errado — teste a conexão antes |
-| Menu não recebe o que foi digitado            | Falta `-it` no comando                        |
-| `docker: command not found`                   | Tente com `sudo`                              |
-
-## Makefile (opcional)
-
-```bash
-make build
-make servidor
-make motorista SERVIDOR=IP_DO_SERVIDOR
-make passageiro SERVIDOR=IP_DO_SERVIDOR
-make testes-remoto SERVIDOR=IP_DO_SERVIDOR
-```
-
-## Variáveis de ambiente
-
-| Variável   | Padrão       | Uso               |
-| ---------- | ------------ | ----------------- |
-| `SERVIDOR` | esta máquina | IP do servidor    |
-| `PORTA`    | `6000`       | Porta do servidor |
