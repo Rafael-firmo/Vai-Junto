@@ -13,7 +13,6 @@ passageiro.py   cliente do passageiro
 testes.py       testes automatizados
 meu_ip.py       descobre o IP da máquina na rede local
 Dockerfile      imagem única para servidor e clientes
-Makefile        atalhos para os comandos abaixo (opcional)
 ```
 
 ## Requisitos
