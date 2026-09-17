@@ -9,4 +9,4 @@ COPY *.py ./
 
 EXPOSE 6000
 
-CMD ["python3", "servidor.py"]
+CMD ["python", "servidor.py"]
